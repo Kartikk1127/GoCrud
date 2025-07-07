@@ -7,6 +7,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/Kartikk1127/GoCrud/internal/storage"
 	"github.com/Kartikk1127/GoCrud/internal/types"
@@ -51,4 +52,25 @@ func New(storage storage.Storage) http.HandlerFunc {
 
 		response.WriteJson(w, http.StatusCreated, map[string]int64{"id": lastId})
 	}
+}
+
+func GetById(storage storage.Storage) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		slog.Info("Getting a student", slog.String("id", id))
+
+		intId, err := strconv.ParseInt(id, 10, 64)
+		if err != nil {
+			response.WriteJson(w, http.StatusBadRequest, response.GeneralError(err))
+			return
+		}
+		student, e := storage.GetStudentById(intId)
+		if e != nil {
+			slog.Error("error occurred while getting user", slog.String("id", id))
+			response.WriteJson(w, http.StatusInternalServerError, response.GeneralError(e))
+			return
+		}
+		response.WriteJson(w, http.StatusOK, student)
+	}
+
 }
